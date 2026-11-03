@@ -198,7 +198,9 @@ async function load(silent){
     if(j.error) throw new Error(j.error);
     DATA = j; $('banner').hidden = true;
     setStat('Checked '+new Date().toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})+' · Stock list updated '+esc(j.stockUpdated||'?'));
-    if(j.warnings&&j.warnings.length){ $('banner').className='banner warn'; $('banner').textContent=j.warnings.join('. '); $('banner').hidden=false; }
+    const warns = (j.warnings||[]).slice();
+    if(typeof j.stockAgeHours==='number' && j.stockAgeHours>30) warns.unshift('This stock list is '+(j.stockAgeHours<48?'over a day':Math.floor(j.stockAgeHours/24)+' days')+' old (last updated '+(j.stockUpdated||'?')+'). Check with the stock controller before promising a car.');
+    if(warns.length){ $('banner').className='banner warn'; $('banner').textContent=warns.join('. '); $('banner').hidden=false; }
   }catch(e){
     $('banner').className='banner'; $('banner').textContent = DATA ? 'Could not refresh. Showing the last list this phone saw. Check your signal and tap Refresh.' : 'Could not load the stock list. Check your signal and tap Refresh.'; $('banner').hidden=false;
     setStat('Not updated');
