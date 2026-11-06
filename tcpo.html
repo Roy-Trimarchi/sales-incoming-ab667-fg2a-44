@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TCPO Stock Finder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f4e79'/%3E%3Crect x='10' y='30' width='44' height='15' rx='5' fill='%23fff'/%3E%3Crect x='19' y='20' width='26' height='14' rx='5' fill='%23fff'/%3E%3Crect x='23' y='23' width='8' height='8' rx='1.5' fill='%231f4e79'/%3E%3Crect x='33' y='23' width='8' height='8' rx='1.5' fill='%231f4e79'/%3E%3Ccircle cx='19' cy='45' r='6' fill='%231f4e79'/%3E%3Ccircle cx='19' cy='45' r='3.5' fill='%23fff'/%3E%3Ccircle cx='45' cy='45' r='6' fill='%231f4e79'/%3E%3Ccircle cx='45' cy='45' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-title" content="TCPO">
+<meta name="theme-color" content="#1f4e79">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+:root{
+  --bg:#f3f4f6; --card:#ffffff; --fg:#161a20; --muted:#5b6472; --line:#d9dde3;
+  --accent:#1f4e79; --accent-fg:#ffffff;
+  --good:#1f8a4c; --good-bg:#e3f4ea; --warn:#b36a00; --warn-bg:#fdeed7; --later:#4b5563; --later-bg:#e8eaee; --bad:#b91c1c; --bad-bg:#fde2e2;
+  --display:"Barlow Semi Condensed",system-ui,sans-serif; --body:"Public Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#13161b; --card:#1d2129; --fg:#eef0f3; --muted:#a3abb8; --line:#333a45;
+  --accent:#5b9bd5; --accent-fg:#0b1a2a;
+  --good:#4ccf82; --good-bg:#15361f; --warn:#f0a93a; --warn-bg:#3a2a0d; --later:#b4bcc8; --later-bg:#2a303a; --bad:#ff7070; --bad-bg:#431515;
+  color-scheme:dark }}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.4;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+.wrap{max-width:760px;margin:0 auto;padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px))) calc(-1*max(16px,env(safe-area-inset-right,0px)));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 12px}
+.top{display:flex;align-items:center;gap:12px;min-height:48px}
+button{font-family:var(--body)}
+.back{display:none;align-items:center;gap:6px;border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;font:600 18px var(--body);padding:10px 16px;cursor:pointer;min-height:48px}
+.back.show{display:flex}
+:is(button,input):focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1{font:700 23px/1.1 var(--display);margin:0;text-wrap:balance;flex:1;min-width:0}
+h1 small{display:block;font:600 14px var(--body);color:var(--muted);margin-top:2px}
+.who{border:0;background:var(--bg);color:var(--fg);border-radius:999px;padding:6px 10px;font:600 13px var(--body);cursor:pointer;min-height:34px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search{margin-top:10px;position:relative}
+.search input{width:100%;font:400 18px var(--body);padding:13px 44px 13px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);min-height:52px}
+.search input::placeholder{color:var(--muted)}
+.search .clr{position:absolute;right:6px;top:6px;bottom:6px;width:40px;border:0;background:transparent;color:var(--muted);font-size:26px;cursor:pointer;border-radius:10px;display:none}
+.search .clr.show{display:block}
+.status{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}
+.status span{flex:1;min-width:0}
+.status .btn{flex:none;font-size:13px;padding:5px 10px;min-height:32px}
+main{padding-top:14px}
+.hint{color:var(--muted);font-size:15px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:16px;padding:16px;cursor:pointer;min-height:96px}
+.card:active,.row:active{transform:scale(.98)}
+.card .name{font:700 24px/1.1 var(--display)}
+.nums{display:flex;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap}
+.pill.good{background:var(--good-bg);color:var(--good)}
+.pill.warn,.pill.t2{background:var(--warn-bg);color:var(--warn)}
+.pill.later,.pill.t3{background:var(--later-bg);color:var(--later)}
+.pill.bad,.pill.sold,.pill.t1{background:var(--bad-bg);color:var(--bad)}
+.pill.cert{background:var(--accent);color:var(--accent-fg)}
+.pill b{font-size:1.15em}
+.list{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:12px;border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;width:100%;min-height:64px}
+.row.hot{border-color:var(--accent)}
+.row .t{flex:1;min-width:0}
+.row .t .n{font:700 20px/1.15 var(--display)}
+.row .t .s{color:var(--muted);font-size:15px}
+.row .count{font:700 28px/1 var(--display);font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
+.row .chev{color:var(--muted);font-size:22px}
+.car{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:14px 16px;display:grid;gap:8px}
+.car.is-sold{opacity:.75;border-style:dashed}
+.car .l1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.car .l1 .n{font:700 20px/1.15 var(--display);flex:1 1 100%;min-width:0}
+.car .price{font:700 28px/1 var(--display);font-variant-numeric:tabular-nums}
+.car .price small{font:600 14px var(--body);color:var(--muted);margin-left:6px}
+.car .meta{color:var(--muted);font-size:15px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.car .meta b{color:var(--fg);font-weight:600}
+.car .soldby{font-size:15px;color:var(--bad);font-weight:600}
+.btn{border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:12px;font:600 17px var(--body);padding:12px 16px;cursor:pointer;min-height:48px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.small{font-size:15px;padding:8px 12px;min-height:40px}
+.btn:disabled{opacity:.5;cursor:default}
+.confirm{display:grid;gap:10px;background:var(--bg);border-radius:12px;padding:12px}
+.confirm label{font-size:14px;color:var(--muted);font-weight:600;display:grid;gap:4px}
+.confirm input{width:100%;font:400 17px var(--body);padding:11px 12px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);min-height:46px}
+.confirm .acts{display:flex;gap:8px;flex-wrap:wrap}
+.confirm .acts .btn{flex:1}
+.err{color:var(--bad);font-size:15px;font-weight:600}
+.empty{color:var(--muted);padding:30px 10px;text-align:center;font-size:17px}
+.foot{margin-top:28px;color:var(--muted);font-size:13px;line-height:1.5}
+.group{margin-bottom:22px}
+.group h2{font:700 20px/1.2 var(--display);margin:0 0 8px;display:flex;align-items:baseline;gap:10px}
+.group h2 span{color:var(--muted);font:600 15px var(--body)}
+.banner{background:var(--bad-bg);color:var(--bad);font-weight:600;padding:10px 14px;border-radius:12px;margin:12px 0 0;font-size:15px}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.linkrow{margin-top:22px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.gate{max-width:420px;margin:60px auto;display:grid;gap:12px;text-align:center}
+.gate h1{font-size:30px}
+.gate input{font:400 20px var(--body);padding:14px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);text-align:center;width:100%}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* sell-now list (screen and print) */
+.sheet{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 16px}
+.sheet h2{font:700 18px/1.2 var(--display);margin:14px 0 4px;border-bottom:2px solid var(--accent);padding-bottom:2px}
+.sheet h2:first-of-type{margin-top:0}
+.sheet table{width:100%;border-collapse:collapse;font-size:14px}
+.sheet th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:3px 4px;border-bottom:1px solid var(--line)}
+.sheet td{padding:4px;border-bottom:1px solid var(--line);vertical-align:top}
+.sheet td.m{font-weight:600}
+.sheet td.n{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.sheet .rules{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.45}
+.sheet .kp{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 6px}
+.sheet .kp div{flex:1 1 120px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--muted)}
+.sheet .kp b{display:block;font:700 20px/1.1 var(--display);color:var(--accent)}
+.tablewrap{overflow-x:auto}
+@media print{
+  @page{size:A4;margin:9mm 10mm}
+  body{background:#fff;color:#111;font-size:11pt}
+  header,.foot,.hint,.linkrow,.banner,#back{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .sheet{border:0;padding:0}
+  .sheet table{font-size:9pt}
+  .sheet h2{font-size:12pt;color:#000;border-color:#1f4e79}
+  .sheet .kp b{color:#1f4e79}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- =============== SETTINGS =============== -->
+<script>
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6gPX0SVfK-m63uEo93UUlWucBzo0quZph0XTo-zYGkR7lXpTwEgmnxL9PuE3Si8H_/exec";   // same web app as the new car finder
+var PASSCODE   = "Toyota2026";
+var REFRESH_SECONDS = 60;
+var SELL_NOW_DAYS = 60;      // tier 1
+var THIS_MONTH_DAYS = 30;    // tier 2
+</script>
+<!-- ======================================== -->
+
+<div class="wrap">
+<div id="gate" class="gate" hidden>
+  <h1>TCPO Stock</h1>
+  <p class="hint">Enter the passcode to open the certified used list.</p>
+  <input id="pass" type="password" placeholder="Passcode" autocomplete="off">
+  <button class="btn primary" id="passGo" type="button">Open</button>
+  <p class="err" id="passErr" hidden>That passcode isn't right.</p>
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="top">
+    <button class="back" id="back" type="button">&#8592; Back</button>
+    <h1 id="title">TCPO Stock<small id="sub"></small></h1>
+    <button class="who" id="who" type="button" title="Change your name">Set your name</button>
+  </div>
+  <div class="search">
+    <input id="q" type="search" placeholder="Type a model, colour, rego or stock number" autocomplete="off">
+    <button type="button" class="clr" id="clr" aria-label="Clear search">&times;</button>
+  </div>
+  <div class="status"><span id="stat"></span><button class="btn small" id="refresh" type="button">Refresh</button></div>
+</header>
+<div id="banner" class="banner" hidden></div>
+<main id="main"></main>
+<p class="foot" id="foot"></p>
+</div>
+</div>
+
+<script id="sample" type="application/json">{"asOf": "7 Nov 2026", "stockUpdated": "7 Nov 6:10am", "stockAgeHours": 3, "eligibleNotCertified": 20, "units": [{"batch": "DA20039", "model": "bZ4X", "variant": "bZ4X Standard AWD 74.7kWh Li-ion Batt Automatic SUV", "colour": "Frosted White", "rego": "GBR07M", "built": "Feb 26", "kms": 4654, "days": 80, "price": 61990.0, "drop": 1500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 1}, {"batch": "DA20043", "model": "LandCruiser", "variant": "Landcruiser Wagon GX 3.3L Diesel Automatic", "colour": "Eclipse Black", "rego": "FVR11C", "built": "Mar 25", "kms": 5221, "days": 80, "price": 96990.0, "drop": 0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 1}, {"batch": "UA09457", "model": "GR86", "variant": "GR86 GTS 2.4L Petrol Manual Coupe", "colour": "Spark Red", "rego": "GDL86J", "built": "Jun 23", "kms": 48115, "days": 64, "price": 38990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 1}, {"batch": "UA09459", "model": "RAV4", "variant": "RAV4 GX-2WD 2.0L Petrol Auto CVT 5 Door Wagon", "colour": "Graphite", "rego": "GEV67U", "built": "Jun 23", "kms": 63863, "days": 61, "price": 32990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 1}, {"batch": "UA09482", "model": "HiAce", "variant": "Hiace Van LWB 2.8L T Diesel Automatic", "colour": "French Vanilla", "rego": "DL29YD", "built": "Sep 24", "kms": 46985, "days": 53, "price": 42990.0, "drop": 2000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09515", "model": "HiLux", "variant": "Hilux 4x4 SR 2.8L 48V Automatic Double Cab", "colour": "Glacier White", "rego": "GEV64G", "built": "Feb 25", "kms": 30121, "days": 46, "price": 52990.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09514", "model": "HiLux", "variant": "Hilux 4x4 SR 2.8L 48V Automatic Double Cab", "colour": "Glacier White", "rego": "GEV65F", "built": "Feb 25", "kms": 29138, "days": 46, "price": 52990.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09520", "model": "Prado", "variant": "Prado VX 2.8L T Diesel Automatic Wagon", "colour": "Graphite", "rego": "GEV65A", "built": "May 18", "kms": 101884, "days": 44, "price": 47990.0, "drop": 2000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09568", "model": "HiLux", "variant": "Hilux 4x4 SR5 2.8L T Diesel Automatic Double Cab C/C", "colour": "Glacier White", "rego": "GEV67D", "built": "Jul 22", "kms": 102892, "days": 38, "price": 46990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09553", "model": "RAV4", "variant": "RAV4 Hybrid GXL AWD 2.5L Auto CVT 5 Door Wagon", "colour": "Saturn Blue", "rego": "GEV64V", "built": "Mar 23", "kms": 131388, "days": 38, "price": 34490.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09573", "model": "HiLux", "variant": "Hilux 4x4 Rugged X 2.8L T Diesel Automatic Double Cab", "colour": "Feverish Red", "rego": "GEV65T", "built": "Feb 22", "kms": 94166, "days": 37, "price": 54990.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09571", "model": "Prado", "variant": "Prado GXL 2.8L 48V Automatic Wagon", "colour": "Glacier White", "rego": "GEV64R", "built": "Mar 25", "kms": 22100, "days": 37, "price": 80990.0, "drop": 500.0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09575", "model": "HiLux", "variant": "Hilux 4x4 SR5 2.8L 48V Automatic Double Cab", "colour": "Frosted White", "rego": "GEV64Q", "built": "May 25", "kms": 10942, "days": 36, "price": 59990.0, "drop": 500.0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09586", "model": "Prado", "variant": "Prado GXL 2.8L 48V Automatic Wagon", "colour": "Glacier White", "rego": "FPD66H", "built": "Jan 25", "kms": 13252, "days": 30, "price": 81990.0, "drop": 1000.0, "priceChanged": "4 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09588", "model": "Fortuner", "variant": "Fortuner GXL 2.8L T Diesel Automatic Wagon", "colour": "Crystal Pearl", "rego": "EPH01A", "built": "Jul 21", "kms": 93469, "days": 30, "price": 42990.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 2}, {"batch": "UA09591", "model": "Corolla", "variant": "COROLLA ASCENT SPORT", "colour": "Crystal Pearl", "rego": "YIS37M", "built": "Jul 19", "kms": 51872, "days": 27, "price": 23990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "DA20049", "model": "Prado", "variant": "Prado Kakadu 2.8L 48V Automatic Wagon", "colour": "Dusty Bronze", "rego": "FZG03W", "built": "Mar 26", "kms": 3639, "days": 26, "price": 98490.0, "drop": 0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "DA20047", "model": "Camry", "variant": "Camry Hybrid Ascent 2.5L Auto CVT Sedan", "colour": "Glacier White", "rego": "FZK04X", "built": "Jan 26", "kms": 2761, "days": 26, "price": 39490.0, "drop": 500.0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09605", "model": "Prado", "variant": "Prado Altitude 2.8L 48V Automatic Wagon", "colour": "Eclipse Black", "rego": "GEV67E", "built": "May 25", "kms": 19312, "days": 24, "price": 89490.0, "drop": 500.0, "priceChanged": "3 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09618", "model": "Camry", "variant": "Camry Hybrid Ascent Sport 2.5L Auto CVT Sedan", "colour": "Liquid Mercury", "rego": "FVA24V", "built": "Aug 25", "kms": 70372, "days": 19, "price": 37990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09619", "model": "Prado", "variant": "LANDCRUISER PRADO KAKADU", "colour": "White", "rego": "GDL66V", "built": "Jun 22", "kms": 72888, "days": 19, "price": 69990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09626", "model": "Prado", "variant": "LANDCRUISER PRADO ALTITUDE", "colour": "Ebony", "rego": "DGQ21N", "built": "Aug 25", "kms": 17615, "days": 17, "price": 93990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "DA20051", "model": "bZ4X", "variant": "bZ4X Standard 2WD 74.7kWh Li-ion Batt Automatic SUV", "colour": "Eclipse Black", "rego": "GCZ58S", "built": "Nov 25", "kms": 5245, "days": 15, "price": 49990.0, "drop": 0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09644", "model": "HiLux", "variant": "Hilux 4x2 Workmate 2.7L Petrol Manual Single Cab C/C", "colour": "Glacier White", "rego": "DS60RZ", "built": "Dec 22", "kms": 101296, "days": 12, "price": 25490.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09663", "model": "HiLux", "variant": "Hilux 4x2 Workmate 2.7L Petrol Automatic Single Cab C/C", "colour": "Stunning Silver", "rego": "FRW49H", "built": "Apr 25", "kms": 14638, "days": 10, "price": 34990.0, "drop": 0, "priceChanged": "30 Oct", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09677", "model": "RAV4", "variant": "RAV4 Hybrid Cruiser-AWD 2.5L Auto CVT 5 Door Wagon", "colour": "Glacier White", "rego": "DP58AM", "built": "Oct 24", "kms": 31919, "days": 8, "price": 49990.0, "drop": 0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09678", "model": "Corolla", "variant": "Corolla Hatch Hybrid Ascent Sport 1.8L Auto CVT 5 Door", "colour": "Glacier White", "rego": "GFY71E", "built": "Sep 26", "kms": 64, "days": 8, "price": 35990.0, "drop": 0, "priceChanged": "4 Nov", "loc": "Yard", "advertised": true, "dmsSold": false, "tier": 3}, {"batch": "UA09633", "model": "Prado", "variant": "LANDCRUISER PRADO GXL", "colour": "White", "rego": "YQR54V", "built": "Sep 24", "kms": 38000, "days": 16, "price": 79990.0, "drop": 0, "priceChanged": "3 Nov", "loc": "Recon", "advertised": false, "dmsSold": false, "tier": 3}, {"batch": "UA09668", "model": "Corolla Cross", "variant": "Corolla Cross Hybrid Atmos 2WD 2.0L Auto CVT SUV", "colour": "Ash Slate", "rego": "GFY72B", "built": "Jul 25", "kms": 21300, "days": 9, "price": 47990.0, "drop": 0, "priceChanged": "3 Nov", "loc": "Recon", "advertised": false, "dmsSold": false, "tier": 3}, {"batch": "UA09669", "model": "HiLux", "variant": "HILUX ROGUE (4x4)", "colour": "Oxide Bronze", "rego": "EVT61Z", "built": "Sep 22", "kms": 70084, "days": 9, "price": 59990.0, "drop": 0, "priceChanged": "3 Nov", "loc": "Recon", "advertised": false, "dmsSold": false, "tier": 3}, {"batch": "DA20054", "model": "Camry", "variant": "Camry Hybrid Ascent 2.5L Auto CVT Sedan", "colour": "Jasper Red", "rego": "GBH68T", "built": "Mar 26", "kms": 15, "days": 4, "price": 40990.0, "drop": 0, "priceChanged": "5 Nov", "loc": "Recon", "advertised": false, "dmsSold": false, "tier": 3}, {"batch": "UA09334", "model": "LandCruiser", "variant": "LANDCRUISER LC300 SAHARA (4x4)", "colour": "White", "rego": "FYS40E", "built": "Sep 23", "kms": 28407, "days": 85, "price": 111990.0, "drop": 2000.0, "priceChanged": "25 Oct", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 1, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09431", "model": "LandCruiser", "variant": "LANDCRUISER LC300 VX (4x4)", "colour": "White", "rego": "GDL83K", "built": "Jan 24", "kms": 44351, "days": 67, "price": 107990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 1, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09455", "model": "Prado", "variant": "LANDCRUISER PRADO GXL", "colour": "White", "rego": "FVG46A", "built": "Aug 25", "kms": 13300, "days": 64, "price": 81490.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 1, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09506", "model": "C-HR", "variant": "C-HR Koba 2WD 1.2L Petrol Auto CVT Wagon", "colour": "Hornet Yellow With Black Roof", "rego": "GDL86N", "built": "Mar 22", "kms": 62186, "days": 47, "price": 24990.0, "drop": 500.0, "priceChanged": "4 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 2, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09513", "model": "HiLux", "variant": "Hilux 4x4 SR 2.8L 48V Automatic Double Cab", "colour": "Glacier White", "rego": "GEV67A", "built": "Feb 25", "kms": 24037, "days": 46, "price": 54685.0, "drop": 305.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 2, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09524", "model": "LandCruiser", "variant": "Landcruiser Wagon GX 3.3L Diesel Automatic", "colour": "Glacier White", "rego": "FWQ75S", "built": "Nov 25", "kms": 4324, "days": 43, "price": 97990.0, "drop": 2000.0, "priceChanged": "28 Oct", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 2, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09543", "model": "Prado", "variant": "Prado GXL 2.8L 48V Automatic Wagon", "colour": "Dusty Bronze", "rego": "GEV64P", "built": "Sep 25", "kms": 13433, "days": 40, "price": 83990.0, "drop": 1000.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 2, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "DA20048", "model": "bZ4X", "variant": "bZ4X Standard 2WD 74.7kWh Li-ion Batt Automatic SUV", "colour": "Frosted White", "rego": "FZM83H", "built": "Oct 25", "kms": 11657, "days": 26, "price": 47490.0, "drop": 500.0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 3, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09617", "model": "Prado", "variant": "Prado GXL 2.8L T Diesel Automatic Wagon", "colour": "Wildfire", "rego": "ELG62V", "built": "Dec 20", "kms": 130038, "days": 19, "price": 46990.0, "drop": 1000.0, "priceChanged": "2 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 3, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09620", "model": "HiLux", "variant": "Hilux 4x4 Rogue 2.8L 48V Automatic Double Cab", "colour": "Graphite", "rego": "FWC54Q", "built": "Aug 25", "kms": 3813, "days": 18, "price": 73385.0, "drop": 0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 3, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09649", "model": "RAV4", "variant": "RAV4 Hybrid XSE (AWD) 2.5L Auto CVT 5 Door Wagon", "colour": "Crystal Pearl With Eclipse Black Roof", "rego": "GFY71B", "built": "Feb 22", "kms": 44004, "days": 12, "price": 44990.0, "drop": 0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 3, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09648", "model": "Corolla", "variant": "COROLLA ZR HYBRID", "colour": "Blue", "rego": "FDH85W", "built": "Jun 23", "kms": 25367, "days": 12, "price": 36990.0, "drop": 0, "priceChanged": "6 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 3, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}, {"batch": "UA09643", "model": "RAV4", "variant": "RAV4 Hybrid Cruiser 2WD 2.5L Auto CVT 5 Door Wagon", "colour": "Graphite", "rego": "FBQ28B", "built": "May 23", "kms": 58739, "days": 12, "price": 44990.0, "drop": 0, "priceChanged": "5 Nov", "loc": "Yard", "advertised": true, "dmsSold": true, "tier": 3, "sold": {"name": "DMS", "note": "", "when": "allocated in the DMS"}}], "warnings": []}</script>
+<script>
+(function(){
+const SAMPLE = JSON.parse(document.getElementById('sample').textContent);
+const MODEL_ORDER = ['HiLux','Prado','RAV4','LandCruiser','LandCruiser 70','Kluger','Fortuner','Corolla','Corolla Cross','Camry','C-HR','Yaris Cross','Yaris','bZ4X','HiAce','GR86','Tundra'];
+const TIER_LABEL = {1:'Sell now',2:'This month',3:'Fresh'};
+
+let DATA = null, nav = {model:null, soldList:false, sheet:false}, q = '', myName = '', openConfirm = null, busy = false, timer = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => n ? '$'+Math.round(n).toLocaleString('en-AU') : 'POA';
+const ls = { get:k=>{try{return localStorage.getItem(k)}catch(e){return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}} };
+
+function unlocked(){ return !PASSCODE || ls.get('tcpo_pass')===PASSCODE; }
+function showGate(){ $('gate').hidden=false; $('app').hidden=true; $('pass').focus(); }
+function tryPass(){ if($('pass').value.trim()===PASSCODE){ ls.set('tcpo_pass',PASSCODE); start(); } else { $('passErr').hidden=false; } }
+$('passGo').onclick = tryPass; $('pass').onkeydown = e=>{ if(e.key==='Enter') tryPass(); };
+
+function units(){ return (DATA&&DATA.units)||[]; }
+function tier(u){ return u.days>=SELL_NOW_DAYS?1:(u.days>=THIS_MONTH_DAYS?2:3); }
+function matchQ(u){
+  if(!q) return true;
+  const hay = (u.model+' '+u.variant+' '+u.colour+' '+u.rego+' '+u.batch).toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
+}
+function live(){ return units().filter(u=>!u.sold&&matchQ(u)); }
+
+async function load(silent){
+  if(!SCRIPT_URL){ if(!DATA){ DATA=JSON.parse(JSON.stringify(SAMPLE)); } setStat('Sample data (no sheet connected)'); render(); return; }
+  if(!silent) setStat('<span class="spin"></span> Updating');
+  try{
+    const r = await fetch(SCRIPT_URL+'?view=tcpo&t='+Date.now(), {cache:'no-store'});
+    const j = await r.json(); if(j.error) throw new Error(j.error);
+    DATA = j; $('banner').hidden = true;
+    setStat('Checked '+new Date().toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})+' · DMS list from '+esc(j.stockUpdated||'?'));
+    const warns=(j.warnings||[]).slice();
+    if(typeof j.stockAgeHours==='number' && j.stockAgeHours>30) warns.unshift('This list is '+(j.stockAgeHours<48?'over a day':Math.floor(j.stockAgeHours/24)+' days')+' old. Check the DMS before promising a car.');
+    if(warns.length){ $('banner').className='banner warn'; $('banner').textContent=warns.join('. '); $('banner').hidden=false; }
+  }catch(e){
+    $('banner').className='banner'; $('banner').textContent = DATA ? 'Could not refresh. Showing the last list this phone saw.' : 'Could not load the list. Check your signal and tap Refresh.'; $('banner').hidden=false; setStat('Not updated');
+  }
+  render();
+}
+function setStat(h){ $('stat').innerHTML = h; }
+async function post(body){
+  body.view='tcpo';
+  if(!SCRIPT_URL){ const u=units().find(x=>x.batch===body.batch); if(body.action==='sold'){ if(u.sold) return {ok:false,error:'Already sold',by:u.sold.name,when:u.sold.when}; u.sold={name:body.name,note:body.note,when:'just now'}; } else delete u.sold; return {ok:true}; }
+  const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)});
+  const j = await r.json(); if(j.payload) DATA=j.payload; return j;
+}
+
+function carCard(u, showModel){
+  const sold=!!u.sold, t=tier(u), dms = sold && u.sold.name==='DMS';
+  let action='';
+  if(openConfirm===u.batch){
+    action=`<div class="confirm" data-confirm="${esc(u.batch)}">
+      <label>Your name<input type="text" data-f="name" value="${esc(myName)}" placeholder="Who sold it?" autocomplete="off"></label>
+      ${sold?'':'<label>Deal number<input type="text" data-f="note" inputmode="numeric" maxlength="6" autocomplete="off"></label>'}
+      <div class="err" data-err hidden></div>
+      <div class="acts"><button type="button" class="btn" data-cancel>Cancel</button><button type="button" class="btn primary" data-go="${sold?'released':'sold'}">${sold?'Yes, put it back on sale':'Confirm sold'}</button></div></div>`;
+  } else if(dms){ action=''; }
+  else if(sold){ action=`<div><button type="button" class="btn small" data-open="${esc(u.batch)}">Not sold after all? Release it</button></div>`; }
+  else { action=`<div><button type="button" class="btn primary small" data-open="${esc(u.batch)}">Mark as sold</button></div>`; }
+  return `<div class="car${sold?' is-sold':''}" id="car-${esc(u.batch)}">
+    <div class="l1"><span class="n">${showModel?esc(u.model)+' · ':''}${esc(u.variant)}</span>
+      <span class="price">${money(u.price)}${u.drop?`<small>was ${money(u.price+u.drop)}</small>`:''}</span></div>
+    <div class="l1">${sold?`<span class="pill sold">SOLD</span>`:`<span class="pill t${t}">${TIER_LABEL[t]}</span>`}<span class="pill later"><b>${u.days}</b> days</span><span class="pill later"><b>${u.kms.toLocaleString()}</b> km</span>
+      ${u.loc==='Recon'?`<span class="pill warn">In recon</span>`:''}${!u.advertised&&!sold?`<span class="pill warn">Not advertised</span>`:''}${u.drop&&!sold?`<span class="pill good">Reduced ${money(u.drop)}${u.priceChanged?' on '+esc(u.priceChanged):''}</span>`:''}</div>
+    <div class="meta"><span><b>${esc(u.colour)}</b></span><span>Built <b>${esc(u.built||'?')}</b></span><span>Rego <b>${esc(u.rego||'?')}</b></span><span>Stock <b>${esc(u.batch)}</b></span></div>
+    ${sold?`<div class="soldby">${dms?'Allocated / sold in the DMS':'Sold by '+esc(u.sold.name)+', '+esc(u.sold.when)+(u.sold.note?' · Deal '+esc(u.sold.note):'')}</div>`:''}
+    ${action}</div>`;
+}
+const sortCars=(a,b)=>(tier(a)-tier(b))||(b.days-a.days);
+
+function sheetHTML(){
+  const L = units().filter(u=>!u.sold);
+  const t1=L.filter(u=>tier(u)===1).sort((a,b)=>b.days-a.days), t2=L.filter(u=>tier(u)===2).sort((a,b)=>b.days-a.days);
+  const row=u=>`<tr><td class="m">${esc(u.model)} ${esc(u.variant.replace(/^\S+\s*/,''))}</td><td>${esc(u.colour)}</td><td>${esc(u.rego)}</td><td class="n">${u.days}</td><td class="n">${u.kms.toLocaleString()}</td><td class="n">${money(u.price)}</td><td>${u.loc==='Recon'?'Recon':''}${u.drop?' Reduced '+money(u.drop):''}</td></tr>`;
+  const tbl=rows=>`<div class="tablewrap"><table><thead><tr><th>Vehicle</th><th>Colour</th><th>Rego</th><th>Days</th><th>Kms</th><th>Price</th><th>Note</th></tr></thead><tbody>${rows.map(row).join('')}</tbody></table></div>`;
+  const over = L.filter(u=>u.days>=SELL_NOW_DAYS).length;
+  return `<div class="sheet">
+    <div class="kp"><div><b>${L.length}</b>certified Toyotas for sale</div><div><b>${t1.length}</b>sell now: ${SELL_NOW_DAYS}+ days</div><div><b>${t2.length}</b>this month: ${THIS_MONTH_DAYS} to ${SELL_NOW_DAYS-1} days</div><div><b>${DATA.eligibleNotCertified||0}</b>Toyotas in stock that could be certified</div></div>
+    <h2>Sell now <span style="color:var(--muted);font-size:14px;font-weight:600">${t1.length}</span></h2>${t1.length?tbl(t1):'<p class="hint">Nothing over '+SELL_NOW_DAYS+' days.</p>'}
+    <h2>This month <span style="color:var(--muted);font-size:14px;font-weight:600">${t2.length}</span></h2>${t2.length?tbl(t2):'<p class="hint">Nothing between '+THIS_MONTH_DAYS+' and '+(SELL_NOW_DAYS-1)+' days.</p>'}
+    <div class="rules"><b>How to use this.</b> Prices are the advertised price from the DMS; any discount over $1,000 needs Roy. Lead with certified: Toyota warranty, roadside, history checked, serviced by us. Check the phone list before you promise a car; if it shows SOLD, it's gone. Mark it sold the moment you take the deposit (name and 6-digit deal number). List from the DMS ${esc(DATA.stockUpdated||'')}.</div>
+  </div>`;
+}
+
+function render(){
+  if(!DATA) return;
+  const main=$('main'), back=$('back'); let html='';
+  $('who').textContent = myName || 'Set your name';
+  const soldCount = units().filter(u=>u.sold && u.sold.name!=='DMS').length;
+  if(nav.sheet){
+    back.classList.add('show'); $('title').firstChild.textContent='Sell now list'; $('sub').textContent='Certified used, by days in stock';
+    html += sheetHTML() + `<div class="linkrow"><button type="button" class="btn" id="printBtn">Print this list</button></div>`;
+  } else if(nav.soldList){
+    back.classList.add('show'); $('title').firstChild.textContent='Sold cars'; $('sub').textContent=`${soldCount} marked on the phone`;
+    const L=units().filter(u=>u.sold && u.sold.name!=='DMS');
+    html += `<p class="hint">Marked sold on the phone. Cars the DMS already shows as allocated aren't listed here. Release a mistake below.</p>`;
+    html += L.length?`<div class="list">${L.map(u=>carCard(u,true)).join('')}</div>`:`<div class="empty">Nothing marked as sold yet.</div>`;
+  } else if(!nav.model){
+    back.classList.remove('show');
+    const p=live(); $('title').firstChild.textContent='TCPO Stock'; $('sub').textContent=`${p.length} certified Toyota${p.length===1?'':'s'} for sale${q?' matching your search':''}`;
+    const t1=p.filter(u=>tier(u)===1).length, t2=p.filter(u=>tier(u)===2).length;
+    html += `<button type="button" class="row hot" data-sheet><span class="t"><span class="n">Sell now list</span><div class="s">${t1} over ${SELL_NOW_DAYS} days · ${t2} over ${THIS_MONTH_DAYS} days</div></span><span class="chev">&#8250;</span></button>`;
+    html += `<p class="hint" style="margin-top:12px">Tap a model.</p>`;
+    const g=new Map(); p.forEach(u=>{ if(!g.has(u.model)) g.set(u.model,[]); g.get(u.model).push(u); });
+    const order=[...g.keys()].sort((a,b)=>{const ia=MODEL_ORDER.indexOf(a),ib=MODEL_ORDER.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});
+    if(!order.length) html+=`<div class="empty">Nothing matches.</div>`;
+    html += `<div class="grid">`+order.map(m=>{const L=g.get(m), n1=L.filter(u=>tier(u)===1).length, n2=L.filter(u=>tier(u)===2).length, lo=Math.min(...L.map(u=>u.price||Infinity)), hi=Math.max(...L.map(u=>u.price||0));
+      return `<button type="button" class="card" data-model="${esc(m)}"><span class="name">${esc(m)}</span><span class="nums"><span class="pill cert"><b>${L.length}</b> certified</span>${n1?`<span class="pill t1"><b>${n1}</b> sell now</span>`:''}${n2?`<span class="pill t2"><b>${n2}</b> this month</span>`:''}</span><span class="nums" style="color:var(--muted);font-size:14px">${isFinite(lo)?(lo===hi?money(lo):money(lo)+' to '+money(hi)):''}</span></button>`;}).join('')+`</div>`;
+    html += `<div class="linkrow"><button type="button" class="btn small" data-soldlist>Sold on the phone (${soldCount})</button></div>`;
+  } else {
+    back.classList.add('show');
+    const all=units().filter(u=>u.model===nav.model&&matchQ(u)); const avail=all.filter(u=>!u.sold).sort(sortCars), soldHere=all.filter(u=>u.sold);
+    $('title').firstChild.textContent=nav.model; $('sub').textContent=`${avail.length} certified for sale`;
+    if(!avail.length) html+=`<div class="empty">None for sale.</div>`;
+    html += `<div class="list">${avail.map(u=>carCard(u,false)).join('')}</div>`;
+    if(soldHere.length) html += `<div class="group" style="margin-top:18px"><h2>Sold or allocated <span>${soldHere.length}</span></h2><div class="list">${soldHere.map(u=>carCard(u,false)).join('')}</div></div>`;
+  }
+  main.innerHTML=html; wire(main);
+  $('foot').innerHTML = `Certified Toyotas only, Albion Park used department, from the daily DMS stock list. "Sell now" = ${SELL_NOW_DAYS}+ days in stock. Cars the DMS shows as Allocated-Sold are hidden automatically. Sold marks made on the phone are shared with everyone and refresh every ${REFRESH_SECONDS} seconds.`;
+}
+function wire(main){
+  main.querySelectorAll('[data-model]').forEach(b=>b.onclick=()=>{nav.model=b.dataset.model;go();});
+  main.querySelectorAll('[data-sheet]').forEach(b=>b.onclick=()=>{nav.sheet=true;go();});
+  main.querySelectorAll('[data-soldlist]').forEach(b=>b.onclick=()=>{nav.soldList=true;go();});
+  main.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{ openConfirm=b.dataset.open; render(); const f=document.querySelector(`[data-confirm="${openConfirm}"] input`); if(f&&!myName) f.focus(); });
+  main.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{ openConfirm=null; render(); });
+  main.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>submit(b.closest('[data-confirm]'), b.dataset.go));
+  const pb=$('printBtn'); if(pb) pb.onclick=()=>{ try{ window.print(); }catch(e){} };
+}
+async function submit(panel, action){
+  if(busy) return;
+  const batch=panel.dataset.confirm, name=(panel.querySelector('[data-f="name"]').value||'').trim();
+  const noteEl=panel.querySelector('[data-f="note"]'), note=noteEl?noteEl.value.trim():'', err=panel.querySelector('[data-err]');
+  if(!name){ err.textContent='Put your name in first.'; err.hidden=false; return; }
+  if(action==='sold' && !/^\d{6}$/.test(note)){ err.textContent='Enter the deal number.'; err.hidden=false; return; }
+  myName=name; ls.set('nvs_name',name);
+  busy=true; panel.querySelectorAll('button').forEach(x=>x.disabled=true); err.hidden=false; err.innerHTML='<span class="spin"></span> Saving';
+  try{
+    const j=await post({action,batch,name,note});
+    if(j.ok){ openConfirm=null; await load(true); }
+    else { err.textContent = j.error==='Already sold' ? `Too late. ${j.by} marked this sold ${j.when}.` : (j.error||'Could not save.'); if(j.payload){ DATA=j.payload; setTimeout(()=>{openConfirm=null;render();},2500);} }
+  }catch(e){ err.textContent='Could not save. Check your signal and try again.'; panel.querySelectorAll('button').forEach(x=>x.disabled=false); }
+  busy=false;
+}
+function go(){ openConfirm=null; window.scrollTo({top:0}); render(); }
+$('back').onclick=()=>{ if(nav.sheet) nav.sheet=false; else if(nav.soldList) nav.soldList=false; else nav.model=null; go(); };
+$('q').oninput=e=>{ q=e.target.value; $('clr').classList.toggle('show',!!q); render(); };
+$('clr').onclick=()=>{ q=''; $('q').value=''; $('clr').classList.remove('show'); $('q').focus(); render(); };
+$('refresh').onclick=()=>load(false);
+$('who').onclick=()=>{ const panel=document.createElement('div'); panel.className='confirm'; panel.style.margin='12px 0 0';
+  panel.innerHTML=`<label>Your name (shown when you mark a car sold)<input type="text" id="nameIn" value="${esc(myName)}" autocomplete="off"></label><div class="acts"><button type="button" class="btn" id="nameCancel">Cancel</button><button type="button" class="btn primary" id="nameSave">Save</button></div>`;
+  const old=document.getElementById('namePanel'); if(old) old.remove(); panel.id='namePanel'; document.querySelector('header').appendChild(panel); $('nameIn').focus();
+  $('nameCancel').onclick=()=>panel.remove(); $('nameSave').onclick=()=>{ myName=$('nameIn').value.trim(); ls.set('nvs_name',myName); panel.remove(); render(); }; };
+function start(){
+  $('gate').hidden=true; $('app').hidden=false; myName=ls.get('nvs_name')||''; load(false);
+  if(SCRIPT_URL){ clearInterval(timer); timer=setInterval(()=>{ if(!busy&&!openConfirm&&document.visibilityState==='visible') load(true); }, REFRESH_SECONDS*1000);
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&!busy) load(true); }); }
+}
+if(unlocked()) start(); else showGate();
+})();
+</script>
+</body>
+</html>
